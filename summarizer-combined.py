@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from PyPDF2 import PdfReader
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize, word_tokenize
-from transformers import BartForConditionalGeneration, BartTokenizer
+
 import io
 
 def generateExtractiveSummary(text, n):
@@ -37,24 +37,7 @@ def generateExtractiveSummary(text, n):
     summary = [sentences[i] for i in top_sentences]
     return ' '.join(summary)
 
-def generateAbstractiveSummary(inputText):
-    # Load the fine-tuned model
-    fine_tuned_model = BartForConditionalGeneration.from_pretrained("fine_tuned_bart_model")
 
-    # Load the saved fine-tuned tokenizer
-    tokenizer = BartTokenizer.from_pretrained("fine_tuned_bart_tokenizer")
-    # Tokenize and encode the text
-    inputs = tokenizer(inputText, return_tensors="pt", max_length=1024, truncation=True)
-
-    # Generate summary
-    summary_ids = fine_tuned_model.generate(inputs.input_ids, 
-                                            max_length=150,  
-                                            min_length = 40, 
-                                            num_beams=4, 
-                                            length_penalty=3.0, 
-                                            early_stopping=False)
-    summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-    return summary;
     
 def main():
     st.title("Summarizer")
@@ -70,16 +53,13 @@ def main():
     
 
 def generate_summary_from_random_text():
-    # Radio buttons for choosing summarization type
-    summarization_type = st.radio("Choose Summarization Type", ("Extractive", "Abstractive"))
-    if(summarization_type == "Extractive"):
-        st.header("Generate Extractive Summarization")
-    else:
-        st.header("Generate Abstractive Summarization")
+
+    st.header("Generate Extractive Summarization")
+
         
     # Text input
     inputText = st.text_area("", height=300, placeholder="Enter some text to summarize...")
-    if(summarization_type == "Extractive"):
+
         # Summarize random text
         if st.button("Summarize"):
             if inputText:
@@ -88,21 +68,9 @@ def generate_summary_from_random_text():
             else:
                 st.warning("Please enter some text to summarize.")
                 
-    else:
-        # Button to trigger summary generation
-        if st.button("Summarize"):
-            if inputText.strip() != "":
-                summary = generateAbstractiveSummary(inputText)
-                # Display the summary
-                st.success("Summary:\n" + summary)
-            else:
-                st.warning("Please enter some text to summarize.")
     
 def summarize_document_page():
     st.header("Summarize Document")
-    
-    # Radio buttons for choosing summarization type
-    summarization_type = st.radio("Choose Summarization Type", ("Extractive", "Abstractive"))
 
     # File input
     file = st.file_uploader("Upload a file", type=["txt", "html", "pdf"])
@@ -112,14 +80,14 @@ def summarize_document_page():
         if file.type == "text/plain":
             # Read text file
             text = io.TextIOWrapper(file, encoding='utf-8').read()
-            summary = generateExtractiveSummary(text, 3) if summarization_type == 'Extractive' else generateAbstractiveSummary(text)
+            summary = generateExtractiveSummary(text, 3) if summarization_type == 'Extractive' 
             st.success("Summary:\n" + summary)
         elif file.type == "text/html":
             # Read HTML file
             html = io.TextIOWrapper(file, encoding='utf-8').read()
             soup = BeautifulSoup(html, 'html.parser')
             text = soup.get_text()
-            summary = generateExtractiveSummary(text, 3) if summarization_type == 'Extractive' else generateAbstractiveSummary(text)
+            summary = generateExtractiveSummary(text, 3) if summarization_type == 'Extractive'
             st.success("Summary:\n" + summary)
         elif file.type == "application/pdf":
             # Read PDF file
@@ -127,7 +95,7 @@ def summarize_document_page():
             text = ""
             for page in pdf_reader.pages:
                 text += page.extract_text()
-            summary = generateExtractiveSummary(text, 3) if summarization_type == 'Extractive' else generateAbstractiveSummary(text)
+            summary = generateExtractiveSummary(text, 3) if summarization_type == 'Extractive'
             st.success("Summary:\n " + summary)
         else:
             st.warning("Invalid file format. Please upload a valid text, HTML, or PDF file.")
